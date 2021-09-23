@@ -315,8 +315,6 @@ int jpeg_decode(struct jpeg_decdata *jpeg, unsigned char *buf)
         return ERR_NOT_8BIT;
     jpeg->height = getword(jpeg);
     jpeg->width = getword(jpeg);
-    if ((jpeg->height & 15) || (jpeg->width & 15))
-        return ERR_BAD_WIDTH_OR_HEIGHT;
     jpeg->info.nc = getbyte(jpeg);
     if (jpeg->info.nc > MAXCOMP)
         return ERR_TOO_MANY_COMPPS;
