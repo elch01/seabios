@@ -138,6 +138,12 @@ static int ahci_command(struct ahci_port_s *port_gf, int iswrite, int isatapi,
             intbits = ahci_port_readl(ctrl, pnr, PORT_IRQ_STAT);
             if (intbits) {
                 ahci_port_writel(ctrl, pnr, PORT_IRQ_STAT, intbits);
+                if (intbits & 0x40000000) {
+                    u32 tf = ahci_port_readl(ctrl, pnr, PORT_TFDATA);
+                    status = tf & 0xff;
+                    error = (tf & 0xff00) >> 8;
+                    break;
+                }
                 if (intbits & 0x02) {
                     status = GET_LOWFLAT(fis->psfis[2]);
                     error  = GET_LOWFLAT(fis->psfis[3]);
@@ -438,7 +444,8 @@ static int ahci_port_setup(struct ahci_port_s *port)
     ahci_port_writel(ctrl, pnr, PORT_CMD, cmd);
 
     /* spin up */
-    cmd |= PORT_CMD_SPIN_UP;
+    cmd &= ~PORT_CMD_ICC_MASK;
+    cmd |= PORT_CMD_SPIN_UP | PORT_CMD_POWER_ON | PORT_CMD_ICC_ACTIVE;
     ahci_port_writel(ctrl, pnr, PORT_CMD, cmd);
     u32 end = timer_calc(AHCI_LINK_TIMEOUT);
     for (;;) {
